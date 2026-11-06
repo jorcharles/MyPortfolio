@@ -14,7 +14,7 @@
 <header>
         <div class="logo">CJ</div>
 
-        <!-- Hidden checkbox to track menu state -->
+    <!-- Hidden checkbox to track menu state -->
         <input type="checkbox" id="menu-toggle" class="menu-checkbox">
 
         <!-- Navigation Links Dropdown -->
