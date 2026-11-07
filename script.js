@@ -104,4 +104,136 @@ document.addEventListener("DOMContentLoaded", () => {
             updateActiveCard();
         });
     }
+
+
+    // =================================================================
+    // 4. IMAGE LIGHTBOX ZOOM POPUP FOR PROJECTS & ACHIEVEMENTS
+    // =================================================================
+    document.addEventListener('click', function(domClickEvent) {
+        if (domClickEvent.target.tagName === 'IMG' && domClickEvent.target.closest('#projects, #achievements')) {
+            var sourceImageUrl = domClickEvent.target.src;    
+            var modalOverlayContainer = document.createElement('div');
+            modalOverlayContainer.style.position = 'fixed';
+            modalOverlayContainer.style.top = '0';
+            modalOverlayContainer.style.left = '0';
+            modalOverlayContainer.style.width = '100%';
+            modalOverlayContainer.style.height = '100%';
+            modalOverlayContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            modalOverlayContainer.style.display = 'flex';
+            modalOverlayContainer.style.justifyContent = 'center';
+            modalOverlayContainer.style.alignItems = 'center';
+            modalOverlayContainer.style.zIndex = '9999';
+            modalOverlayContainer.style.cursor = 'pointer';
+
+            var fullSizeImageElement = document.createElement('img');
+            fullSizeImageElement.src = sourceImageUrl;
+            fullSizeImageElement.style.maxHeight = '90vh';
+            fullSizeImageElement.style.maxWidth = '90vw';
+            fullSizeImageElement.style.borderRadius = '8px';
+            fullSizeImageElement.style.boxShadow = '0 5px 25px rgba(0,0,0,0.5)';
+
+            modalOverlayContainer.appendChild(fullSizeImageElement);
+            document.body.appendChild(modalOverlayContainer);
+
+            modalOverlayContainer.addEventListener('click', function() {
+                document.body.removeChild(modalOverlayContainer);
+            });
+        }
+    });
+
+
+    // =================================================================
+    // 5. CONTACT DIALOG & FORMSPREE BACKGROUND SUBMISSION (WITH EMAIL CHECK)
+    // =================================================================
+    const openContactBtn = document.getElementById('openContact');
+    const closeContactBtn = document.getElementById('closeContact');
+    const contactDialog = document.getElementById('contactDialog');
+    const contactForm = document.getElementById('contactForm');
+    const formStatus = document.getElementById('formStatus');
+
+    if (openContactBtn && contactDialog) {
+        openContactBtn.addEventListener('click', function() {
+            if (typeof contactDialog.showModal === 'function') {
+                contactDialog.showModal();
+            } else {
+                contactDialog.setAttribute('open', true);
+            }
+        });
+    }
+
+    if (closeContactBtn && contactDialog) {
+        closeContactBtn.addEventListener('click', function() {
+            contactDialog.close();
+            if (contactForm) contactForm.reset();
+            if (formStatus) formStatus.textContent = '';
+        });
+    }
+
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Strict Email Validation Check
+            const emailInput = contactForm.querySelector('input[name="email"]');
+            const emailValue = emailInput ? emailInput.value.trim() : '';
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(emailValue)) {
+                if (formStatus) {
+                    formStatus.textContent = "Please enter a valid email address (e.g., name@gmail.com).";
+                    formStatus.style.color = "#ff6b6b";
+                }
+                return;
+            }
+
+            const formData = new FormData(contactForm);
+            const actionUrl = contactForm.action;
+
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    if (formStatus) {
+                        formStatus.textContent = "Thank you! Your message was sent.";
+                        formStatus.style.color = "";
+                    }
+                    contactForm.reset();
+                    setTimeout(() => {
+                        if (contactDialog) contactDialog.close();
+                        if (formStatus) formStatus.textContent = '';
+                    }, 2500);
+                } else {
+                    response.json().then(data => {
+                        if (Object.hasOwn(data, 'errors')) {
+                            if (formStatus) formStatus.textContent = data["errors"].map(error => error["message"]).join(", ");
+                        } else {
+                            if (formStatus) formStatus.textContent = "Oops! There was a problem submitting your form.";
+                        }
+                    });
+                }
+            }).catch(error => {
+                if (formStatus) formStatus.textContent = "Oops! There was a problem submitting your form.";
+            });
+        });
+    }
+
+    if (contactDialog) {
+        contactDialog.addEventListener('click', function(event) {
+            const dialogRect = contactDialog.getBoundingClientRect();
+            if (
+                event.clientX < dialogRect.left ||
+                event.clientX > dialogRect.right ||
+                event.clientY < dialogRect.top ||
+                event.clientY > dialogRect.bottom
+            ) {
+                contactDialog.close();
+                if (contactForm) contactForm.reset();
+                if (formStatus) formStatus.textContent = '';
+            }
+        });
+    }
 });
